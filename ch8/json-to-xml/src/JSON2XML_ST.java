@@ -1,19 +1,16 @@
-/***
+/*
  * Excerpted from "The Definitive ANTLR 4 Reference",
  * published by The Pragmatic Bookshelf.
  * Copyrights apply to this code. It may not be used to create training material, 
  * courses, books, articles, and the like. Contact us if you are in doubt.
  * We make no guarantees that this code is fit for any purpose. 
  * Visit http://www.pragmaticprogrammer.com/titles/tpantlr2 for more book information.
-***/
+ */
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
-
-import java.io.FileInputStream;
-import java.io.InputStream;
 
 /*
 {
@@ -41,7 +38,7 @@ to
 
 public class JSON2XML_ST {
     public static class XMLEmitter extends JSONBaseListener {
-        ParseTreeProperty<ST> xml = new ParseTreeProperty<ST>();
+        ParseTreeProperty<ST> xml = new ParseTreeProperty<>();
         STGroup templates = new STGroupFile("XML.stg");
 
         @Override
@@ -122,12 +119,11 @@ public class JSON2XML_ST {
 
     public static void main(String[] args) throws Exception {
         String inputFile = null;
-        if ( args.length>0 ) inputFile = args[0];
-        InputStream is = System.in;
-        if ( inputFile!=null ) {
-            is = new FileInputStream(inputFile);
-        }
-        ANTLRInputStream input = new ANTLRInputStream(is);
+
+        if ( args.length>0 )
+            inputFile = args[0];
+
+        CharStream input = CharStreams.fromFileName(inputFile);
         JSONLexer lexer = new JSONLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JSONParser parser = new JSONParser(tokens);
