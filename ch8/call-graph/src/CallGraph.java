@@ -133,6 +133,6 @@ public class CallGraph {
         System.out.println(collector.graph.toDOT());
 
         // Here's another example that uses StringTemplate to generate output
-        // System.out.println(collector.graph.toST().render());
+        System.out.println(collector.graph.toST().render());
     }
 }
