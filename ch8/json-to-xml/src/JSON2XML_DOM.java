@@ -82,7 +82,7 @@ public class JSON2XML_DOM {
 
     public static class Element extends Node {
         String name;
-        List<Node> children = new ArrayList<Node>();
+        List<Node> children = new ArrayList<>();
         public Element(String name) { this.name = name; }
         public String toString() {
             String content = Utils.join(children.iterator(), "");
@@ -98,7 +98,7 @@ public class JSON2XML_DOM {
     }
 
     public static class XMLEmitter extends JSONBaseListener {
-        ParseTreeProperty<Node> nodes = new ParseTreeProperty<Node>();
+        ParseTreeProperty<Node> nodes = new ParseTreeProperty<>();
 
         @Override
         public void exitJson(JSONParser.JsonContext ctx) {
@@ -194,12 +194,11 @@ public class JSON2XML_DOM {
 
     public static void main(String[] args) throws Exception {
         String inputFile = null;
-        if ( args.length>0 ) inputFile = args[0];
-        InputStream is = System.in;
-        if ( inputFile!=null ) {
-            is = new FileInputStream(inputFile);
-        }
-        ANTLRInputStream input = new ANTLRInputStream(is);
+
+        if ( args.length>0 )
+            inputFile = args[0];
+
+        CharStream input = CharStreams.fromFileName(inputFile);
         JSONLexer lexer = new JSONLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         JSONParser parser = new JSONParser(tokens);
