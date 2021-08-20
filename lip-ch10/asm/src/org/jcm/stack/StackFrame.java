@@ -1,0 +1,23 @@
+/*
+ * Excerpted from "Language Implementation Patterns",
+ * published by The Pragmatic Bookshelf.
+ * Copyrights apply to this code. It may not be used to create training material, 
+ * courses, books, articles, and the like. Contact us if you are in doubt.
+ * We make no guarantees that this code is fit for any purpose. 
+ * Visit http://www.pragmaticprogrammer.com/titles/tpdsl for more book information.
+*/
+package org.jcm.stack;
+
+import org.jcm.asm.FunctionSymbol;
+
+public class StackFrame {
+    FunctionSymbol sym; // associated with which function?
+    int returnAddress;  // the instruction following the call
+    Object[] locals;    // holds parameters and local variables
+
+    public StackFrame(FunctionSymbol sym, int returnAddress) {
+        this.sym = sym;
+        this.returnAddress = returnAddress;
+        locals = new Object[sym.getNumArgs() + sym.getNumLocals()];
+    }
+}

@@ -42,11 +42,12 @@ public class BytecodeAssembler extends AssemblerParser {
     /** Create an asm attached to a lexer and define the instruction set. */
     public BytecodeAssembler(
         TokenStream lexer,
-        BytecodeDefinition.Instruction[] instructions
+        BytecodeDefBase.Instruction[] instructions
     ) {
         super(lexer);
+
         for (int i=1; i<instructions.length; i++) {
-            instructionOpcodeMapping.put(instructions[i].name.toLowerCase(),i);
+            instructionOpcodeMapping.put(instructions[i].name.toLowerCase(), i);
         }
     }
 
@@ -131,7 +132,7 @@ public class BytecodeAssembler extends AssemblerParser {
     /** After parser is complete, look for unresolved labels */
     protected void checkForUnresolvedReferences() {
         for (String name : labels.keySet()) {
-            LabelSymbol sym = (LabelSymbol) labels.get(name);
+            LabelSymbol sym = labels.get(name);
 
             if (!sym.isDefined) {
                 System.err.println("unresolved reference: "+name);
@@ -141,7 +142,7 @@ public class BytecodeAssembler extends AssemblerParser {
 
     /** Compute the code address of a label */
     protected int getLabelAddress(String id) {
-        LabelSymbol sym = (LabelSymbol) labels.get(id);
+        LabelSymbol sym = labels.get(id);
 
         if (sym==null) {
             // assume it's a forward code reference; record opnd address
@@ -190,7 +191,7 @@ public class BytecodeAssembler extends AssemblerParser {
 
     protected void defineLabel(Token idToken) {
         String id = idToken.getText();
-        LabelSymbol sym = (LabelSymbol)labels.get(id);
+        LabelSymbol sym = labels.get(id);
 
         if (sym==null) {
             LabelSymbol csym = new LabelSymbol(id, ip, false);
@@ -211,7 +212,7 @@ public class BytecodeAssembler extends AssemblerParser {
 
     protected void ensureCapacity(int index) {
         if (index >= code.length) {
-            int newSize = Math.max(index, code.length) * 2;
+            int newSize = index * 2;
             byte[] bigger = new byte[newSize];
             System.arraycopy(code, 0 , bigger, 0, code.length);
             code = bigger;
@@ -222,9 +223,8 @@ public class BytecodeAssembler extends AssemblerParser {
         int b1 = memory[index++]&0xFF; // mask off sign-extended bits
         int b2 = memory[index++]&0xFF;
         int b3 = memory[index++]&0xFF;
-        int b4 = memory[index++]&0xFF;
-        int word = b1<<(8*3) | b2<<(8*2) | b3<<(8*1) | b4;
-        return word;
+        int b4 = memory[index]&0xFF;
+        return b1<<(8*3) | b2<<(8*2) | b3<<(8) | b4;
     }
 
     /**
@@ -232,9 +232,9 @@ public class BytecodeAssembler extends AssemblerParser {
      *  left to right.
      */
     public static void writeInt(byte[] bytes, int index, int value) {
-        bytes[index+0] = (byte)((value>>(8*3))&0xFF); // get highest byte
+        bytes[index] = (byte)((value>>(8*3))&0xFF); // get highest byte
         bytes[index+1] = (byte)((value>>(8*2))&0xFF);
-        bytes[index+2] = (byte)((value>>(8*1))&0xFF);
+        bytes[index+2] = (byte)((value>>(8))&0xFF);
         bytes[index+3] = (byte)(value&0xFF);
     }
 }

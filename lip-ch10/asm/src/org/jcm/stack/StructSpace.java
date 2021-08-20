@@ -5,18 +5,20 @@
  * courses, books, articles, and the like. Contact us if you are in doubt.
  * We make no guarantees that this code is fit for any purpose. 
  * Visit http://www.pragmaticprogrammer.com/titles/tpdsl for more book information.
- */
-package org.jcm.asm;
+*/
+package org.jcm.stack;
 
-public class BytecodeDefinition extends BytecodeDefBase {
+import java.util.Arrays;
 
-    // INSTRUCTION BYTECODES
-    public static final int INSTR_ADD = 1;
-    // ...
+public class StructSpace {
 
-    /** Used for assembly/disassembly; describes instruction set */
-    public static Instruction[] instructions = new Instruction[] {
-        null, // <INVALID>
-        new Instruction("iadd",REG,REG,REG), // index is the opcode
-    };
+	Object[] fields;
+
+	public StructSpace(int numFields) {
+        this.fields = new Object[numFields];
+    }
+
+    public String toString() {
+	    return Arrays.toString(fields);
+	}
 }

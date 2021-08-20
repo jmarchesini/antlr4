@@ -10,16 +10,16 @@ package org.jcm.asm;
 
 public class FunctionSymbol {
     String name;
-    int nargs; // how many arguments are there?
-    int nlocals; // how many locals are there?
+    int numArgs;
+    int numLocals;
     int address;
 
-    public FunctionSymbol(String name) { this.name = name; }    
+    public FunctionSymbol(String name) { this.name = name; }
 
-    public FunctionSymbol(String name, int nargs, int nlocals, int address) {
+    public FunctionSymbol(String name, int numArgs, int numLocals, int address) {
         this.name = name;
-        this.nargs = nargs;
-        this.nlocals = nlocals;
+        this.numArgs = numArgs;
+        this.numLocals = numLocals;
         this.address = address;
     }
 
@@ -35,9 +35,17 @@ public class FunctionSymbol {
     public String toString() {
         return "FunctionSymbol{" +
                "name='" + name + '\'' +
-               ", args=" + nargs +
-               ", locals=" + nlocals +
+               ", args=" + numArgs +
+               ", locals=" + numLocals +
                ", address=" + address +
                '}';
     }
+
+    public String getName() { return name; }
+
+    public int getNumArgs() { return numArgs; }
+
+    public int getNumLocals() { return numLocals; }
+
+    public int getAddress() { return address; }
 }

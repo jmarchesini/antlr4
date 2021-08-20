@@ -1,10 +1,8 @@
-package org.jcm;
+package org.jcm.asm;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.jcm.asm.BytecodeAssembler;
-import org.jcm.asm.BytecodeDefinition;
 import org.jcm.asm.gen.AssemblerLexer;
 
 public class Assembler {
