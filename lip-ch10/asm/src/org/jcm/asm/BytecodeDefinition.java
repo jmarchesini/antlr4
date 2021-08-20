@@ -10,13 +10,13 @@ package org.jcm.asm;
 
 public class BytecodeDefinition extends BytecodeDefBase {
 
-    // INSTRUCTION BYTECODES
     public static final int INSTR_ADD = 1;
-    // ...
 
-    /** Used for assembly/disassembly; describes instruction set */
-    public static Instruction[] instructions = new Instruction[] {
-        null, // <INVALID>
-        new Instruction("iadd",REG,REG,REG), // index is the opcode
-    };
+    @Override
+    public Instruction[] getInstructions() {
+        return new Instruction[] {
+            null, // <INVALID>
+            new Instruction("iadd", REG, REG, REG), // index is the opcode
+        };
+    }
 }

@@ -45,38 +45,41 @@ public class BytecodeDefinition extends BytecodeDefBase {
     public static final short INSTR_POP = 30;    // throw away top of stack
     public static final short INSTR_HALT = 31;
 
-    public static Instruction[] instructions = new Instruction[] {
-        null, // <INVALID>
-        new Instruction("iadd"), // index is the opcode
-        new Instruction("isub"),
-        new Instruction("imul"),
-        new Instruction("ilt"),
-        new Instruction("ieq"),
-        new Instruction("fadd"),
-        new Instruction("fsub"),
-        new Instruction("fmul"),
-        new Instruction("flt"),
-        new Instruction("feq"),
-        new Instruction("itof"),
-        new Instruction("call", FUNC),
-        new Instruction("ret"),
-        new Instruction("br", INT),
-        new Instruction("brt", INT),
-        new Instruction("brf", INT),
-        new Instruction("cconst", INT),
-        new Instruction("iconst", INT),
-        new Instruction("fconst", POOL),
-        new Instruction("sconst", POOL),
-        new Instruction("load", INT),
-        new Instruction("gload", INT),
-        new Instruction("fload", INT),
-        new Instruction("store", INT),
-        new Instruction("gstore", INT),
-        new Instruction("fstore", INT),
-        new Instruction("print"),
-        new Instruction("struct", INT),
-        new Instruction("null"),
-        new Instruction("pop"),
-        new Instruction("halt") 
-    };
+    @Override
+    public Instruction[] getInstructions() {
+        return new Instruction[] {
+            null, // <INVALID>
+            new Instruction("iadd"), // index is the opcode
+            new Instruction("isub"),
+            new Instruction("imul"),
+            new Instruction("ilt"),
+            new Instruction("ieq"),
+            new Instruction("fadd"),
+            new Instruction("fsub"),
+            new Instruction("fmul"),
+            new Instruction("flt"),
+            new Instruction("feq"),
+            new Instruction("itof"),
+            new Instruction("call", FUNC),
+            new Instruction("ret"),
+            new Instruction("br", INT),
+            new Instruction("brt", INT),
+            new Instruction("brf", INT),
+            new Instruction("cconst", INT),
+            new Instruction("iconst", INT),
+            new Instruction("fconst", POOL),
+            new Instruction("sconst", POOL),
+            new Instruction("load", INT),
+            new Instruction("gload", INT),
+            new Instruction("fload", INT),
+            new Instruction("store", INT),
+            new Instruction("gstore", INT),
+            new Instruction("fstore", INT),
+            new Instruction("print"),
+            new Instruction("struct", INT),
+            new Instruction("null"),
+            new Instruction("pop"),
+            new Instruction("halt")
+        };
+    }
 }

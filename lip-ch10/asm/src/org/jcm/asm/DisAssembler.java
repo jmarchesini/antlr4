@@ -15,15 +15,17 @@ public class DisAssembler {
     byte[] code;
     int codeSize;
     protected Object[] constPool;
-    BytecodeDefinition def;
+    BytecodeDefBase bcDef;
 
     public DisAssembler(byte[] code,
                         int codeSize,
-                        Object[] constPool)
+                        Object[] constPool,
+                        BytecodeDefBase bcDef)
     {
         this.code = code;
         this.codeSize = codeSize;
         this.constPool = constPool;
+        this.bcDef = bcDef;
     }
 
     public void disassemble() {
@@ -40,7 +42,7 @@ public class DisAssembler {
     {
         int opcode = code[ip];
         BytecodeDefinition.Instruction I =
-            BytecodeDefinition.instructions[opcode];
+            bcDef.getInstructions()[opcode];
         String instrName = I.name;
         System.out.printf("%04d:\t%-11s", ip, instrName);
         ip++;

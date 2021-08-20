@@ -90,11 +90,11 @@ public class Interpreter {
         boolean hasErrors;
 
         try (input) {
+            BytecodeDefinition bcDef = new BytecodeDefinition();
             CharStream charStream = CharStreams.fromStream(input);
             AssemblerLexer lexer = new AssemblerLexer(charStream);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            BytecodeAssembler assembler =
-                new BytecodeAssembler(tokens, BytecodeDefinition.instructions);
+            BytecodeAssembler assembler = new BytecodeAssembler(tokens, bcDef.getInstructions());
 
             assembler.program();
             interp.code = assembler.getMachineCode();
@@ -102,7 +102,9 @@ public class Interpreter {
             interp.constPool = assembler.getConstantPool();
             interp.mainFunction = assembler.getMainFunction();
             interp.globals = new Object[assembler.getDataSize()];
-            interp.disasm = new DisAssembler(interp.code, interp.codeSize, interp.constPool);
+            interp.disasm =
+                new DisAssembler(interp.code, interp.codeSize, interp.constPool, bcDef);
+
             hasErrors = assembler.getNumberOfSyntaxErrors() > 0;
         }
 

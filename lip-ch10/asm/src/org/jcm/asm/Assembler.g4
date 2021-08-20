@@ -26,7 +26,7 @@ program
           { checkForUnresolvedReferences(); }
     ;
 
-globals : NEWLINE* '.globals' INT NEWLINE {defineDataSize($INT.int);} ;
+globals : NEWLINE* '.globals' INT NEWLINE { defineDataSize($INT.int); } ;
 
 functionDeclaration
     : '.def' name=ID ':' 'args' '=' a=INT ',' 'locals' '=' n=INT NEWLINE
@@ -34,11 +34,10 @@ functionDeclaration
     ;
 
 instr
-    :   ID NEWLINE                         { gen($ID); }
-    |   ID operand NEWLINE                 { gen($ID,$operand.start); }
-    |   ID a=operand ',' b=operand NEWLINE { gen($ID,$a.start,$b.start); }
-    |   ID a=operand ',' b=operand ',' c=operand NEWLINE
-          { gen($ID,$a.start,$b.start,$c.start); }
+    :   ID NEWLINE                                       { gen($ID); }
+    |   ID operand NEWLINE                               { gen($ID,$operand.start); }
+    |   ID a=operand ',' b=operand NEWLINE               { gen($ID,$a.start,$b.start); }
+    |   ID a=operand ',' b=operand ',' c=operand NEWLINE { gen($ID,$a.start,$b.start,$c.start); }
     ;
 
 operand
@@ -84,5 +83,5 @@ FLOAT
 WS  :   (' '|'\t')+ -> skip ;
 
 NEWLINE
-    :   (';' .*)? '\r'? '\n'  // optional comment followed by newline
+    :   (';' .*?)? '\r'? '\n'  // optional comment followed by newline
     ;

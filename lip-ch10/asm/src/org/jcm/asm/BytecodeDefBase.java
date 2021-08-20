@@ -24,4 +24,6 @@ public abstract class BytecodeDefBase {
             n = 3;
         }
     }
+
+    public abstract Instruction[] getInstructions();
 }
