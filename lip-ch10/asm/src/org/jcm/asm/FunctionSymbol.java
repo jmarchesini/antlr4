@@ -34,11 +34,11 @@ public class FunctionSymbol {
     @Override
     public String toString() {
         return "FunctionSymbol{" +
-               "name='" + name + '\'' +
-               ", args=" + numArgs +
-               ", locals=" + numLocals +
-               ", address=" + address +
-               '}';
+            "name='" + name + '\'' +
+            ", args=" + numArgs +
+            ", locals=" + numLocals +
+            ", address=" + address +
+            '}';
     }
 
     public String getName() { return name; }

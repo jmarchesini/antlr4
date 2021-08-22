@@ -9,7 +9,6 @@
 package org.jcm.asm;
 
 public class BytecodeDefinition extends BytecodeDefBase {
-
     public static final int INSTR_ADD = 1;
 
     @Override

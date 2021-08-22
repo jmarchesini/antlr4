@@ -3,6 +3,7 @@
 ; i = 0
 	iconst 0
 	gstore 0
+
 ; while i<10:
 loop:
 	gload 0
@@ -12,11 +13,12 @@ loop:
 ; print i
 	gload 0
 	print
-;	i = i + 1
+; i = i + 1
 	gload 0
 	iconst 1
 	iadd
 	gstore 0
 	br loop
+
 done:
 	halt
