@@ -19,27 +19,31 @@ import org.jcm.asm.gen.AssemblerLexer;
 import java.io.InputStream;
 import java.io.FileInputStream;
 
-/** A simple stack-based interpreter */
-public class Interpreter {
-
+/**
+ * A simple stack-based interpreter - pattern 27
+ */
+public class StackInterpreter {
     public static final int DEFAULT_OPERAND_STACK_SIZE = 100;
     public static final int DEFAULT_CALL_STACK_SIZE = 1000;
-    protected Object[] constPool;
 
     DisAssembler disasm;
     boolean trace = false;
-    int ip;             // instruction pointer register
-    byte[] code;        // byte-addressable code memory.
-    int codeSize;
-    Object[] globals;   // global variable space
 
-    /** Operand stack, grows upwards */
+    byte[] code;        // byte-addressable code memory
+    int ip;             // instruction pointer register
+    int codeSize;       // size of code memory
+
+    Object[] globals;   // global variable space
+    Object[] constPool; // the constant pool
+
+    /* Operand stack, grows upwards */
     Object[] operands = new Object[DEFAULT_OPERAND_STACK_SIZE];
     int sp = -1;        // stack pointer register
 	
-    /** Stack of stack frames, grows upwards */
+    /* Stack of stack frames, grows upwards */
     StackFrame[] calls = new StackFrame[DEFAULT_CALL_STACK_SIZE];
     int fp = -1;        // frame pointer register
+
     FunctionSymbol mainFunction;
 
     public static void main(String[] args) throws Exception {
@@ -48,10 +52,10 @@ public class Interpreter {
         boolean dump = false;
         int i = 0;
 
-        String filename=null;
+        String filename = null;
         InputStream input;
 
-        while ( i<args.length ) {
+        while (i < args.length) {
             switch (args[i]) {
                 case "-trace":
                     trace = true;
@@ -72,21 +76,26 @@ public class Interpreter {
             }
         }
 
-        if ( filename!=null )
+        if (filename != null)
             input = new FileInputStream(filename);
         else
             input = System.in;
 
-        Interpreter interpreter = new Interpreter();
-        load(interpreter, input);
-        interpreter.trace = trace;
-        interpreter.exec();
+        StackInterpreter stackInterpreter = new StackInterpreter();
+        boolean hasErrors = load(stackInterpreter, input);
 
-        if ( disassemble ) interpreter.disassemble();
-        if ( dump) interpreter.coredump();
+        if (!hasErrors) {
+            stackInterpreter.trace = trace;
+            stackInterpreter.exec();
+
+            if (disassemble)
+                stackInterpreter.disassemble();
+            if (dump)
+                stackInterpreter.coredump();
+        }
     }
 
-    public static boolean load(Interpreter interp, InputStream input) throws Exception {
+    public static boolean load(StackInterpreter interp, InputStream input) throws Exception {
         boolean hasErrors;
 
         try (input) {
@@ -111,183 +120,174 @@ public class Interpreter {
         return hasErrors;
     }
 
-    /** Execute the bytecodes in code memory starting at mainAddr */
+    /* Execute the bytecodes in code memory starting at mainAddr */
     public void exec() {
-        // SIMULATE "call main()"; set up stack as if we'd called main()
-        if ( mainFunction==null ) {
+        // simulate "call main()" - set up stack and start at addr 0
+        if (mainFunction == null)
             mainFunction = new FunctionSymbol("main", 0, 0, 0);
-        }
-        StackFrame f = new StackFrame(mainFunction, -1);
-        calls[++fp] = f;
+
+        StackFrame mainFrame = new StackFrame(mainFunction, -1);
+        calls[++fp] = mainFrame;
         ip = mainFunction.getAddress();
+
         cpu();
     }
 
-    /** Simulate the fetch-execute cycle */
+    /* Interpreter's fetch-decode-execute cycle */
     protected void cpu() {
-        Object v; // some locals to reuse
-        int a,b;
-        float e,f;
+        Object v;
+        int a, b;
+        float e, f;
         int addr;
+
         short opcode = code[ip];
 
-        while (opcode!= BytecodeDefinition.INSTR_HALT && ip < codeSize) {
-            if ( trace ) trace();
+        while (opcode != BytecodeDefinition.INSTR_HALT && ip < codeSize) {
+            if (trace)
+                trace();
+
             ip++; //jump to next instruction or first byte of operand
 
             switch (opcode) {
-                case BytecodeDefinition.INSTR_IADD :
-                    a = (Integer)operands[sp-1]; // 1st opnd 1 below top
-                    b = (Integer)operands[sp];   // 2nd opnd at top of stack
-                    sp -= 2;                     // pop both operands
-                    operands[++sp] = a + b;      // push result
+                case BytecodeDefinition.INSTR_IADD:
+                    a = (Integer) operands[sp - 1]; // 1st operand 1 below top
+                    b = (Integer) operands[sp];     // 2nd operand at top of stack
+                    sp -= 2;                        // pop both operands
+                    operands[++sp] = a + b;         // push result
                     break;
-                case BytecodeDefinition.INSTR_ISUB :
-                    a = (Integer)operands[sp-1];
-                    b = (Integer)operands[sp];
+                case BytecodeDefinition.INSTR_ISUB:
+                    a = (Integer) operands[sp - 1];
+                    b = (Integer) operands[sp];
                     sp -= 2;
                     operands[++sp] = a - b;
                     break;
                 case BytecodeDefinition.INSTR_IMUL:
-                    a = (Integer)operands[sp-1];
-                    b = (Integer)operands[sp];
+                    a = (Integer) operands[sp - 1];
+                    b = (Integer) operands[sp];
                     sp -= 2;
                     operands[++sp] = a * b;
                     break;
-                case BytecodeDefinition.INSTR_ILT :
-                    a = (Integer)operands[sp-1];
-                    b = (Integer)operands[sp];
+                case BytecodeDefinition.INSTR_ILT:
+                    a = (Integer) operands[sp - 1];
+                    b = (Integer) operands[sp];
                     sp -= 2;
                     operands[++sp] = a < b;
                     break;
-                case BytecodeDefinition.INSTR_IEQ :
-                    a = (Integer)operands[sp-1];
-                    b = (Integer)operands[sp];
+                case BytecodeDefinition.INSTR_IEQ:
+                    a = (Integer) operands[sp - 1];
+                    b = (Integer) operands[sp];
                     sp -= 2;
                     operands[++sp] = a == b;
                     break;
-                case BytecodeDefinition.INSTR_FADD :
-                    e = (Float)operands[sp-1];
-                    f = (Float)operands[sp];
+                case BytecodeDefinition.INSTR_FADD:
+                    e = (Float) operands[sp - 1];
+                    f = (Float) operands[sp];
                     sp -= 2;
                     operands[++sp] = e + f;
                     break;
-                case BytecodeDefinition.INSTR_FSUB :
-                    e = (Float)operands[sp-1];
-                    f = (Float)operands[sp];
+                case BytecodeDefinition.INSTR_FSUB:
+                    e = (Float) operands[sp - 1];
+                    f = (Float) operands[sp];
                     sp -= 2;
                     operands[++sp] = e - f;
                     break;
                 case BytecodeDefinition.INSTR_FMUL:
-                    e = (Float)operands[sp-1];
-                    f = (Float)operands[sp];
+                    e = (Float) operands[sp - 1];
+                    f = (Float) operands[sp];
                     sp -= 2;
                     operands[++sp] = e * f;
                     break;
-                case BytecodeDefinition.INSTR_FLT :
-                    e = (Float)operands[sp-1];
-                    f = (Float)operands[sp];
+                case BytecodeDefinition.INSTR_FLT:
+                    e = (Float) operands[sp - 1];
+                    f = (Float) operands[sp];
                     sp -= 2;
                     operands[++sp] = e < f;
                     break;
-                case BytecodeDefinition.INSTR_FEQ :
-                    e = (Float)operands[sp-1];
-                    f = (Float)operands[sp];
+                case BytecodeDefinition.INSTR_FEQ:
+                    e = (Float) operands[sp - 1];
+                    f = (Float) operands[sp];
                     sp -= 2;
                     operands[++sp] = e == f;
                     break;
-                case BytecodeDefinition.INSTR_ITOF :
-                    a = (Integer)operands[sp--];
-                    operands[++sp] = (float)a;
+                case BytecodeDefinition.INSTR_ITOF:
+                    a = (Integer) operands[sp--];
+                    operands[++sp] = (float) a;
                     break;
-                case BytecodeDefinition.INSTR_CALL :
+                case BytecodeDefinition.INSTR_CALL:
                     int funcIndexInConstPool = getIntOperand();
                     call(funcIndexInConstPool);
                     break;
-                case BytecodeDefinition.INSTR_RET : // result is on op stack
+                case BytecodeDefinition.INSTR_RET:  // result is on op stack
                     StackFrame fr = calls[fp--];    // pop stack frame
                     ip = fr.returnAddress;          // branch to ret addr
                     break;
-                case BytecodeDefinition.INSTR_BR :
+                case BytecodeDefinition.INSTR_BR:
                     ip = getIntOperand();
                     break;
-                case BytecodeDefinition.INSTR_BRT :
+                case BytecodeDefinition.INSTR_BRT:
                     addr = getIntOperand();
-                    if ( operands[sp--].equals(true) ) ip = addr;
+                    if (operands[sp--].equals(true)) ip = addr;
                     break;
-                case BytecodeDefinition.INSTR_BRF :
+                case BytecodeDefinition.INSTR_BRF:
                     addr = getIntOperand();
-                    if ( operands[sp--].equals(false) ) ip = addr;
+                    if (operands[sp--].equals(false)) ip = addr;
                     break;
-                case BytecodeDefinition.INSTR_CCONST :
-                    operands[++sp] = (char)getIntOperand();
+                case BytecodeDefinition.INSTR_CCONST:
+                    operands[++sp] = (char) getIntOperand(); // push operand
                     break;
-                case BytecodeDefinition.INSTR_ICONST :
-                    operands[++sp] = getIntOperand(); // push operand
+                case BytecodeDefinition.INSTR_ICONST:
+                    operands[++sp] = getIntOperand();
                     break;
-                case BytecodeDefinition.INSTR_FCONST :
-                case BytecodeDefinition.INSTR_SCONST :
+                case BytecodeDefinition.INSTR_FCONST:
+                case BytecodeDefinition.INSTR_SCONST:
                     int constPoolIndex = getIntOperand();
                     operands[++sp] = constPool[constPoolIndex];
                     break;
-                case BytecodeDefinition.INSTR_LOAD : // load from call stack
+                case BytecodeDefinition.INSTR_LOAD:  // load from call stack
                     addr = getIntOperand();
                     operands[++sp] = calls[fp].locals[addr];
                     break;
-                case BytecodeDefinition.INSTR_GLOAD :// load from global memory
+                case BytecodeDefinition.INSTR_GLOAD: // load from global memory
                     addr = getIntOperand();
                     operands[++sp] = globals[addr];
                     break;
-                case BytecodeDefinition.INSTR_FLOAD:
-                    StructSpace struct = (StructSpace)operands[sp--];
+                case BytecodeDefinition.INSTR_FLOAD: // load from struct field
+                    StructSpace struct = (StructSpace) operands[sp--];
                     int fieldOffset = getIntOperand();
                     operands[++sp] = struct.fields[fieldOffset];
                     break;
-                case BytecodeDefinition.INSTR_STORE :
+                case BytecodeDefinition.INSTR_STORE:
                     addr = getIntOperand();
                     calls[fp].locals[addr] = operands[sp--];
                     break;
-                case BytecodeDefinition.INSTR_GSTORE :
+                case BytecodeDefinition.INSTR_GSTORE:
                     addr = getIntOperand();
                     globals[addr] = operands[sp--];
                     break;
                 case BytecodeDefinition.INSTR_FSTORE:
-                    struct = (StructSpace)operands[sp--];
+                    struct = (StructSpace) operands[sp--];
                     v = operands[sp--];
                     fieldOffset = getIntOperand();
                     struct.fields[fieldOffset] = v;
                     break;
-                case BytecodeDefinition.INSTR_PRINT :
+                case BytecodeDefinition.INSTR_PRINT:
                     System.out.println(operands[sp--]);
                     break;
-                case BytecodeDefinition.INSTR_STRUCT :
-                    int nfields = getIntOperand();
-                    operands[++sp] = new StructSpace(nfields);
+                case BytecodeDefinition.INSTR_STRUCT:
+                    int numFields = getIntOperand();
+                    operands[++sp] = new StructSpace(numFields);
                     break;
-                case BytecodeDefinition.INSTR_NULL :
+                case BytecodeDefinition.INSTR_NULL:
                     operands[++sp] = null;
                     break;
-                case BytecodeDefinition.INSTR_POP :
+                case BytecodeDefinition.INSTR_POP:
                     --sp;
                     break;
-                default :
-                    throw new Error("invalid opcode: "+opcode+" at ip="+(ip-1));
+                default:
+                    throw new Error("invalid opcode: " + opcode + " at ip=" + (ip - 1));
             }
             opcode = code[ip];
         }
-    }
-
-    protected void call(int functionConstPoolIndex) {
-        FunctionSymbol fs = (FunctionSymbol)constPool[functionConstPoolIndex];
-        StackFrame f = new StackFrame(fs, ip);
-        calls[++fp] = f; // push new stack frame for parameters and locals
-
-        // move args from operand stack to top frame on call stack
-        for (int a=fs.getNumArgs()-1; a>=0; a--) {
-            f.locals[a] = operands[sp--];
-        }
-
-        ip = fs.getAddress(); // branch to function
     }
 
     /**
@@ -298,10 +298,25 @@ public class Interpreter {
     protected int getIntOperand() {
         int word = BytecodeAssembler.getInt(code, ip);
         ip += 4;
+
         return word;
     }
 
-    public void disassemble() { disasm.disassemble(); }
+    protected void call(int functionConstPoolIndex) {
+        FunctionSymbol funSym = (FunctionSymbol) constPool[functionConstPoolIndex];
+        StackFrame frame = new StackFrame(funSym, ip);
+
+        calls[++fp] = frame; // push new stack frame for parameters and locals
+
+        // move args from operand stack to top frame on call stack
+        for (int a = funSym.getNumArgs() - 1; a >= 0; a--) {
+            frame.locals[a] = operands[sp--];
+        }
+
+        ip = funSym.getAddress(); // branch to function
+    }
+
+    protected void disassemble() { disasm.disassemble(); }
 
     protected void trace() {
         disasm.disassembleInstruction(ip);
@@ -310,66 +325,76 @@ public class Interpreter {
 
         for (int i = 0; i <= sp; i++) {
             Object o = operands[i];
-            System.out.print(" "+o);
+            System.out.print(" " + o);
         }
 
         System.out.print(" ]");
 
-        if ( fp>=0 ) {
+        if (fp >= 0) {
             System.out.print(", calls=[");
+
             for (int i = 0; i <= fp; i++) {
                 System.out.print(" " + calls[i].sym.getName());
             }
+
             System.out.print(" ]");
         }
 
         System.out.println();
     }
 
-    public void coredump() {
-        if ( constPool.length>0 ) dumpConstantPool();
-        if ( globals.length>0 ) dumpDataMemory();
+    protected void coredump() {
+        if (constPool.length > 0)
+            dumpConstantPool();
+
+        if (globals.length > 0)
+            dumpDataMemory();
+
         dumpCodeMemory();
     }
 
     protected void dumpConstantPool() {
         System.out.println("Constant pool:");
         int addr = 0;
+
         for (Object o : constPool) {
-            if ( o instanceof String ) {
+            if (o instanceof String)
                 System.out.printf("%04d: \"%s\"\n", addr, o);
-            }
-            else {
+            else
                 System.out.printf("%04d: %s\n", addr, o);
-            }
+
             addr++;
         }
+
         System.out.println();
     }
 
     protected void dumpDataMemory() {
         System.out.println("Data memory:");
         int addr = 0;
+
         for (Object o : globals) {
-            if ( o!=null ) {
+            if (o != null)
                 System.out.printf("%04d: %s <%s>\n",
-                                  addr, o, o.getClass().getSimpleName());
-            }
-            else {
+                    addr, o, o.getClass().getSimpleName());
+            else
                 System.out.printf("%04d: <null>\n", addr);
-            }
+
             addr++;
         }
+
         System.out.println();
     }
 
     public void dumpCodeMemory() {
         System.out.println("Code memory:");
-        for (int i=0; code!=null && i<codeSize; i++) {
-            if ( i%8==0 && i!=0 ) System.out.println();
-            if ( i%8==0 ) System.out.printf("%04d:", i);
-            System.out.printf(" %3d", ((int)code[i]));
+
+        for (int i = 0; code != null && i < codeSize; i++) {
+            if (i % 8 == 0 && i != 0) System.out.println();
+            if (i % 8 == 0) System.out.printf("%04d:", i);
+            System.out.printf(" %3d", ((int) code[i]));
         }
+
         System.out.println();
     }
 }
