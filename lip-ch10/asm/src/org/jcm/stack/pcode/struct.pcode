@@ -17,4 +17,8 @@
 	gload 0
 	fload 0
 	print
+; print t.1
+	gload 0
+	fload 1
+	print
 	halt

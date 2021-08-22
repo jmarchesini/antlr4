@@ -9,7 +9,6 @@
 grammar Assembler;
 
 @members {
-    // Define the functionality required by the parser for code generation
     protected void gen(Token instrToken) {;}
     protected void gen(Token instrToken, Token operandToken) {;}
     protected void gen(Token instrToken, Token oToken1, Token oToken2) {;}
@@ -22,8 +21,7 @@ grammar Assembler;
 
 program
     :   globals?
-        ( functionDeclaration | instr | label | NEWLINE )+
-          { checkForUnresolvedReferences(); }
+        ( functionDeclaration | instr | label | NEWLINE )+ { checkForUnresolvedReferences(); }
     ;
 
 globals : NEWLINE* '.globals' INT NEWLINE { defineDataSize($INT.int); } ;
@@ -58,8 +56,10 @@ REG :   'r' INT ;
 
 ID  :   LETTER (LETTER | '0'..'9')* ;
 
-//FUNC:   ID '()' {setText($ID.text);} ;
-FUNC:   ID '()' { int parenIdx = getText().indexOf("("); setText(getText().substring(0, parenIdx-1)); } ;
+FUNC:   ID '()' {
+                   int parenIdx = getText().indexOf("(");
+                   setText(getText().substring(0, parenIdx));
+                } ;
 
 fragment
 LETTER
@@ -70,8 +70,7 @@ INT :   '-'? '0'..'9'+ ;
 
 CHAR:   '\'' . '\'' ;
 
-//STRING: '\"' STR_CHARS '\"' {setText($STR_CHARS.text);} ;
-STRING: '""' STR_CHARS '""' { setText(getText().replaceAll("^\"|\"$", "")); } ;
+STRING: '"' STR_CHARS '"' { setText(getText().replaceAll("\"", "")); } ;
 
 fragment STR_CHARS : ~'"'* ;
 
