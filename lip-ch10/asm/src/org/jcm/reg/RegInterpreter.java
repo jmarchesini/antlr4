@@ -12,7 +12,9 @@ import org.jcm.asm.FunctionSymbol;
 import org.jcm.asm.InterpreterBase;
 import org.jcm.asm.StructSpace;
 
-/* A simple register-based interpreter */
+/**
+ * A simple register-based interpreter - pattern 28
+ */
 public class RegInterpreter extends InterpreterBase {
 
     StackFrame[] calls = new StackFrame[DEFAULT_CALL_STACK_SIZE];
@@ -55,7 +57,6 @@ public class RegInterpreter extends InterpreterBase {
                     k = getRegOperand();
                     r[k] = ((Integer) r[i]) + ((Integer) r[j]);
                     break;
-                // ...
                 case BytecodeDefinition.INSTR_ISUB:
                     i = getRegOperand();
                     j = getRegOperand();

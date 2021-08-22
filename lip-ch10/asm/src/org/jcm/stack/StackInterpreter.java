@@ -8,120 +8,24 @@
  */
 package org.jcm.stack;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.jcm.asm.BytecodeAssembler;
-import org.jcm.asm.DisAssembler;
 import org.jcm.asm.FunctionSymbol;
+import org.jcm.asm.InterpreterBase;
 import org.jcm.asm.StructSpace;
-import org.jcm.asm.gen.AssemblerLexer;
-
-import java.io.InputStream;
-import java.io.FileInputStream;
 
 /**
  * A simple stack-based interpreter - pattern 27
  */
-public class StackInterpreter {
-    public static final int DEFAULT_OPERAND_STACK_SIZE = 100;
-    public static final int DEFAULT_CALL_STACK_SIZE = 1000;
+public class StackInterpreter extends InterpreterBase {
 
-    DisAssembler disasm;
-    boolean trace = false;
-
-    byte[] code;        // byte-addressable code memory
-    int ip;             // instruction pointer register
-    int codeSize;       // size of code memory
-
-    Object[] globals;   // global variable space
-    Object[] constPool; // the constant pool
-
-    /* Operand stack, grows upwards */
-    Object[] operands = new Object[DEFAULT_OPERAND_STACK_SIZE];
-    int sp = -1;        // stack pointer register
-	
-    /* Stack of stack frames, grows upwards */
     StackFrame[] calls = new StackFrame[DEFAULT_CALL_STACK_SIZE];
-    int fp = -1;        // frame pointer register
-
-    FunctionSymbol mainFunction;
 
     public static void main(String[] args) throws Exception {
-        boolean trace = false;
-        boolean disassemble = false;
-        boolean dump = false;
-        int i = 0;
-
-        String filename = null;
-        InputStream input;
-
-        while (i < args.length) {
-            switch (args[i]) {
-                case "-trace":
-                    trace = true;
-                    i++;
-                    break;
-                case "-dis":
-                    disassemble = true;
-                    i++;
-                    break;
-                case "-dump":
-                    dump = true;
-                    i++;
-                    break;
-                default:
-                    filename = args[i];
-                    i++;
-                    break;
-            }
-        }
-
-        if (filename != null)
-            input = new FileInputStream(filename);
-        else
-            input = System.in;
-
-        StackInterpreter stackInterpreter = new StackInterpreter();
-        boolean hasErrors = load(stackInterpreter, input);
-
-        if (!hasErrors) {
-            stackInterpreter.trace = trace;
-            stackInterpreter.exec();
-
-            if (disassemble)
-                stackInterpreter.disassemble();
-            if (dump)
-                stackInterpreter.coredump();
-        }
+        StackInterpreter si = new StackInterpreter();
+        BytecodeDefinition bcDef = new BytecodeDefinition();
+        si.run(args, si, bcDef);
     }
 
-    public static boolean load(StackInterpreter interp, InputStream input) throws Exception {
-        boolean hasErrors;
-
-        try (input) {
-            BytecodeDefinition bcDef = new BytecodeDefinition();
-            CharStream charStream = CharStreams.fromStream(input);
-            AssemblerLexer lexer = new AssemblerLexer(charStream);
-            CommonTokenStream tokens = new CommonTokenStream(lexer);
-            BytecodeAssembler assembler = new BytecodeAssembler(tokens, bcDef.getInstructions());
-
-            assembler.program();
-            interp.code = assembler.getMachineCode();
-            interp.codeSize = assembler.getCodeMemorySize();
-            interp.constPool = assembler.getConstantPool();
-            interp.mainFunction = assembler.getMainFunction();
-            interp.globals = new Object[assembler.getDataSize()];
-            interp.disasm =
-                new DisAssembler(interp.code, interp.codeSize, interp.constPool, bcDef);
-
-            hasErrors = assembler.getNumberOfSyntaxErrors() > 0;
-        }
-
-        return hasErrors;
-    }
-
-    /* Execute the bytecodes in code memory starting at mainAddr */
+    @Override
     public void exec() {
         // simulate "call main()" - set up stack and start at addr 0
         if (mainFunction == null)
@@ -135,7 +39,7 @@ public class StackInterpreter {
     }
 
     /* Interpreter's fetch-decode-execute cycle */
-    protected void cpu() {
+    private void cpu() {
         Object v;
         int a, b;
         float e, f;
@@ -291,19 +195,7 @@ public class StackInterpreter {
         }
     }
 
-    /**
-     * Pull off 4 bytes starting at ip and return 32-bit signed int value.
-     *  Return with ip pointing *after* last byte of operand.  The byte-order
-     *  is high byte down to low byte, left to right.
-     */
-    protected int getIntOperand() {
-        int word = BytecodeAssembler.getInt(code, ip);
-        ip += 4;
-
-        return word;
-    }
-
-    protected void call(int functionConstPoolIndex) {
+    private void call(int functionConstPoolIndex) {
         FunctionSymbol funSym = (FunctionSymbol) constPool[functionConstPoolIndex];
         StackFrame frame = new StackFrame(funSym, ip);
 
@@ -317,9 +209,7 @@ public class StackInterpreter {
         ip = funSym.getAddress(); // branch to function
     }
 
-    protected void disassemble() { disasm.disassemble(); }
-
-    protected void trace() {
+    private void trace() {
         disasm.disassembleInstruction(ip);
 
         System.out.print("\tstack=[");
@@ -339,61 +229,6 @@ public class StackInterpreter {
             }
 
             System.out.print(" ]");
-        }
-
-        System.out.println();
-    }
-
-    protected void coredump() {
-        if (constPool.length > 0)
-            dumpConstantPool();
-
-        if (globals.length > 0)
-            dumpDataMemory();
-
-        dumpCodeMemory();
-    }
-
-    protected void dumpConstantPool() {
-        System.out.println("Constant pool:");
-        int addr = 0;
-
-        for (Object o : constPool) {
-            if (o instanceof String)
-                System.out.printf("%04d: \"%s\"\n", addr, o);
-            else
-                System.out.printf("%04d: %s\n", addr, o);
-
-            addr++;
-        }
-
-        System.out.println();
-    }
-
-    protected void dumpDataMemory() {
-        System.out.println("Data memory:");
-        int addr = 0;
-
-        for (Object o : globals) {
-            if (o != null)
-                System.out.printf("%04d: %s <%s>\n",
-                    addr, o, o.getClass().getSimpleName());
-            else
-                System.out.printf("%04d: <null>\n", addr);
-
-            addr++;
-        }
-
-        System.out.println();
-    }
-
-    public void dumpCodeMemory() {
-        System.out.println("Code memory:");
-
-        for (int i = 0; code != null && i < codeSize; i++) {
-            if (i % 8 == 0 && i != 0) System.out.println();
-            if (i % 8 == 0) System.out.printf("%04d:", i);
-            System.out.printf(" %3d", ((int) code[i]));
         }
 
         System.out.println();
