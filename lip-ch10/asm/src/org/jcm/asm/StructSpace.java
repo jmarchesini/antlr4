@@ -6,13 +6,17 @@
  * We make no guarantees that this code is fit for any purpose. 
  * Visit http://www.pragmaticprogrammer.com/titles/tpdsl for more book information.
 */
-package org.jcm.stack;
+package org.jcm.asm;
 
 import java.util.Arrays;
 
 public class StructSpace {
 
 	Object[] fields;
+
+	public Object[] getFields() {
+		return fields;
+	}
 
 	public StructSpace(int numFields) {
         this.fields = new Object[numFields];

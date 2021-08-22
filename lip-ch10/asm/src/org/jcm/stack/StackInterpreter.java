@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.jcm.asm.BytecodeAssembler;
 import org.jcm.asm.DisAssembler;
 import org.jcm.asm.FunctionSymbol;
+import org.jcm.asm.StructSpace;
 import org.jcm.asm.gen.AssemblerLexer;
 
 import java.io.InputStream;
@@ -254,7 +255,7 @@ public class StackInterpreter {
                 case BytecodeDefinition.INSTR_FLOAD: // load from struct field
                     StructSpace struct = (StructSpace) operands[sp--];
                     int fieldOffset = getIntOperand();
-                    operands[++sp] = struct.fields[fieldOffset];
+                    operands[++sp] = struct.getFields()[fieldOffset];
                     break;
                 case BytecodeDefinition.INSTR_STORE:
                     addr = getIntOperand();
@@ -268,7 +269,7 @@ public class StackInterpreter {
                     struct = (StructSpace) operands[sp--];
                     v = operands[sp--];
                     fieldOffset = getIntOperand();
-                    struct.fields[fieldOffset] = v;
+                    struct.getFields()[fieldOffset] = v;
                     break;
                 case BytecodeDefinition.INSTR_PRINT:
                     System.out.println(operands[sp--]);
